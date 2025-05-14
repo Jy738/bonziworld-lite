@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+
+<html>
+
+    <head>
+
+       <title>BonziWERLD</title>
+
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
+
+      <style>
+           #chatpage{display:none}
+          #chatcont{
+            border:1px solid black;
+            border-radius:5px;
+            width:300px;
+            height:500px;
+            overflow-y:scroll;
+            overflow-x:scroll;
+          }
+          .chatfield{display:flex;flex-direction:row;}
+          .msg{font-size:16px}
+          .msgsystem{font-size:14px;font-style:italic;}
+          .msguser{font-size:25px;}
+      </style>
+
+
+    </head>
+
+    <body>
+      <div id="chatpage">
+        <div id="chatcont">
+          <p class="msgsystem">
+            Welcome to BonziWORLD text edition
+            pro deluxe megaWPM mini ultra-lite.
+          </p><hr>
+        </div>
+        <div class="chatfield">
+          <input type="text" id="chatinput" placeholder="Enter a message..">
+          <button onclick="send()">Send</button>
+        </div>
+      </div>
+      <div id="loginpage">
+        <input type="text" id="username" placeholder="Username...">
+        <button onclick="login()">Login</button>
+
+      </div>
+        <script>
+           let usersPublic = new Map;
+           
+           function $(a){return document.getElementById(a)}
+
+           var socket = io("https://bonzi.gay");
+
+           function addMsg(user,cont){
+             $("chatcont").insertAdjacentHTML('beforeend',`
+                  <p><span class="msguser">${user}:</span> ${cont}</p> 
+               `);
+           }
+           function send(){
+             socket.emit('talk',{text:$('chatinput').value});
+             addMsg('<b>You</b>',$('chatinput').value);
+             $('chatinput').value ='';
+           }
+           function login(){
+             try{
+             $("chatpage").style.display="block";
+             $("loginpage").style.display="none";
+             let myname = $('username').value;
+             socket.emit('login',{name:$('username').value,room:''});
+             socket.on("updateAll", (data) => {
+                usersPublic.clear();
+                for (let [id, user] of entries(data.usersPublic)) {
+                  usersPublic.set(id, user);
+                 }
+             });
+             
+            socket.on("update", (data) => {
+              usersPublic.set(data.guid, data.userPublic);
+             });
+             socket.on("talk",data=>{
+               let username = usersPublic.get(data.guid).name;
+               addMsg(username,data.text);
+             });
+               
+             }catch(e){alert(e);}
+           }
+        </script>
+
+    </body>
+
+</html>
